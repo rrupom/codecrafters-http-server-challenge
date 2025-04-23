@@ -10,13 +10,14 @@ const server = net.createServer((socket) => {
     if (path.includes("/user-agent")) {
       const userAgentValue = request.match(/User-Agent:\s*(.+)/i);
       socket.write(
-        `HTTP/1.1 200 OK\r\nContent-Type: text/plan\r\nContent-Length: ${userAgentValue[1].length}\r\n\r\n${userAgentValue[1]}`)
+        `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgentValue[1].length}\r\n\r\n${userAgentValue[1]}`
+      );
     } else if (path.includes("/echo/")) {
       const dynamicPart = path.split("/echo/")[1];
       socket.write(
         `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${dynamicPart.length}\r\n\r\n${dynamicPart}`
       );
-    } else if (path === '/') {
+    } else if (path === "/") {
       socket.write("HTTP/1.1 200 OK\r\n\r\n");
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
