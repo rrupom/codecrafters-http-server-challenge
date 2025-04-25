@@ -29,7 +29,7 @@ const server = net.createServer((socket) => {
         `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgentValue[1].length}\r\n\r\n${userAgentValue[1]}`
       );
     } else if (requestedPath.includes("/echo/")) {
-      const dynamicPart = path.split("/echo/")[1];
+      const dynamicPart = requestedPath.split("/echo/")[1];
       socket.write(
         `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${dynamicPart.length}\r\n\r\n${dynamicPart}`
       );
