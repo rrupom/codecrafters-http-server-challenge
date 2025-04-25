@@ -1,17 +1,18 @@
 const net = require("net");
 const fs = require("fs");
-const nodePath = require("path");
+const path = require("path");
 
-console.log(__dirname);
+const directoryFlagIndex = process.argv.indexOf("--directory");
+const directoryPath = process.argv[directoryFlagIndex + 1];
 
 const server = net.createServer((socket) => {
   socket.on("data", (data) => {
     const request = data.toString();
     const requestLine = request.split("\r\n")[0];
-    const [_method, path] = requestLine.split(" ");
-    if (path.includes("/files")) {
-      const fileName = path.match(/^\/files\/(.+)$/)[1];
-      const filePath = nodePath.join(__dirname, `../files/${fileName}`);
+    const [_method, requestedPath] = requestLine.split(" ");
+    if (requestedPath.includes("/files")) {
+      const fileName = requestedPath.replace("/files/", "");
+      const filePath = path.join(directoryPath, fileName);
       if (fs.existsSync(filePath)) {
         const fileSize = fs.statSync(filePath).size;
         const fileContents = fs.readFileSync(filePath);
@@ -21,18 +22,18 @@ const server = net.createServer((socket) => {
       } else {
         socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
       }
-    }
-    if (path.includes("/user-agent")) {
+      return;
+    } else if (requestedPath.includes("/user-agent")) {
       const userAgentValue = request.match(/User-Agent:\s*(.+)/i);
       socket.write(
         `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgentValue[1].length}\r\n\r\n${userAgentValue[1]}`
       );
-    } else if (path.includes("/echo/")) {
+    } else if (requestedPath.includes("/echo/")) {
       const dynamicPart = path.split("/echo/")[1];
       socket.write(
         `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${dynamicPart.length}\r\n\r\n${dynamicPart}`
       );
-    } else if (path === "/") {
+    } else if (requestedPath === "/") {
       socket.write("HTTP/1.1 200 OK\r\n\r\n");
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
