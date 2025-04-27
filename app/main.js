@@ -8,19 +8,27 @@ const directoryPath = process.argv[directoryFlagIndex + 1];
 const server = net.createServer((socket) => {
   socket.on("data", (data) => {
     const request = data.toString();
-    const requestLine = request.split("\r\n")[0];
-    const [_method, requestedPath] = requestLine.split(" ");
+    const [headerPart, requestBody] = request.split("\r\n\r\n");
+    const requestLine = headerPart.split("\r\n")[0];
+    console.log(requestBody);
+    const [method, requestedPath] = requestLine.split(" ");
     if (requestedPath.includes("/files")) {
       const fileName = requestedPath.replace("/files/", "");
       const filePath = path.join(directoryPath, fileName);
-      if (fs.existsSync(filePath)) {
-        const fileSize = fs.statSync(filePath).size;
-        const fileContents = fs.readFileSync(filePath);
-        socket.write(
-          `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileSize}\r\n\r\n${fileContents}`
-        );
-      } else {
-        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      switch (method) {
+        case "GET":
+          if (fs.existsSync(filePath)) {
+            const fileSize = fs.statSync(filePath).size;
+            const fileContents = fs.readFileSync(filePath);
+            socket.write(
+              `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileSize}\r\n\r\n${fileContents}`
+            );
+          } else {
+            socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+          }
+        case "POST":
+          fs.writeFileSync(filePath, requestBody);
+          socket.write("HTTP/1.1 201 Created\r\n\r\n");
       }
       return;
     } else if (requestedPath.includes("/user-agent")) {
